@@ -1,0 +1,27 @@
+# Local PostgreSQL for the automated visual inspection service.
+# Credentials are development-only and match the backend defaults.
+
+name: avi-inspection
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: avi-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: avi
+      POSTGRES_PASSWORD: avi_dev_password
+      POSTGRES_DB: avi
+    ports:
+      - "5432:5432"
+    volumes:
+      - avi_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U avi -d avi"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+
+volumes:
+  avi_pg_data:
