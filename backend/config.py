@@ -14,12 +14,12 @@ class Settings(BaseSettings):
 
     database_url: str = "postgresql+asyncpg://avi:avi_dev_password@localhost:5432/avi"
 
-    cognex_host: str = "127.0.0.1"
-    cognex_port: int = 5005
+    cognex_host: str = "169.254.4.28"
+    cognex_port: int = 23
     cognex_bind_host: str = "0.0.0.0"
     cognex_trigger_command: str = "SE8"
     cognex_command_timeout: float = 3.0
-    cognex_mock_enabled: bool = True
+    cognex_mock_enabled: bool = False
 
     cors_origins: list[str] = [
         "http://localhost:5173",

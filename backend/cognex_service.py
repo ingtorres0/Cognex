@@ -189,14 +189,22 @@ class CognexCameraClient:
         except Exception as exc:
             raise CognexProtocolError(f"Could not parse camera response {stripped!r}") from exc
 
+    # async def probe(self) -> bool:
+    #     """Return true when the camera accepts a TCP session and answers PING."""
+    #     try:
+    #         reply = (await self._transact("SO1")).strip()
+    #     except CognexError:
+    #         return False
+    #     return reply == "1"
     async def probe(self) -> bool:
-        """Return true when the camera accepts a TCP session and answers PING."""
+        """Verifica si la camara acepta el login TCP."""
         try:
-            reply = (await self._transact("PING")).strip()
-        except CognexError:
+            # Mandamos un SO1 de sondeo. Si regresa 1 (Exito) o -5 (Ya estaba Online), la comunicacion funciona.
+            reply = (await self._transact("SO1")).strip()
+            return reply in ["1", "-5"]
+        except Exception:
             return False
-        return reply == "1"
-
+        
     async def _transact(self, command: str) -> str:
         try:
             reader, writer = await asyncio.wait_for(
@@ -204,22 +212,29 @@ class CognexCameraClient:
                 timeout=self.timeout,
             )
         except (OSError, asyncio.TimeoutError) as exc:
-            raise CognexConnectionError(
-                f"Camera at {self.host}:{self.port} is unreachable"
-            ) from exc
+            raise CognexConnectionError(f"Camera at {self.host}:{self.port} is unreachable") from exc
 
         try:
+            # 1. Login Cognex (Usuario admin, sin password)
+            await asyncio.wait_for(reader.readuntil(b":"), timeout=self.timeout)
+            writer.write(b"admin\r\n")
+            await writer.drain()
+            
+            await asyncio.wait_for(reader.readuntil(b":"), timeout=self.timeout)
+            writer.write(b"\r\n")
+            await writer.drain()
+            
+            await asyncio.wait_for(reader.readline(), timeout=self.timeout)
+
+            # 2. Enviar el comando exacto que pide el dashboard (ej. SE8)
             writer.write(f"{command}\r\n".encode("ascii"))
             await writer.drain()
-            try:
-                data = await asyncio.wait_for(reader.readline(), timeout=self.timeout)
-            except asyncio.TimeoutError as exc:
-                raise CognexConnectionError(
-                    f"Camera at {self.host}:{self.port} did not respond"
-                ) from exc
+            
+            data = await asyncio.wait_for(reader.readline(), timeout=self.timeout)
             if not data:
                 raise CognexProtocolError("Camera closed the connection without a response")
             return data.decode("ascii", errors="replace")
+            
         finally:
             writer.close()
             try:

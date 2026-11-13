@@ -33,6 +33,11 @@ This stack has no authentication. Keep it on a trusted network.
 - Python 3.11+
 - Node.js 20+
 
+## CAMERA SETTINGS
+
+- Make sure telnet is enabled in Inustrial Ethernet 
+
+
 ## 1. Start PostgreSQL
 
 From the repository root:

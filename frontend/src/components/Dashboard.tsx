@@ -165,8 +165,12 @@ export function Dashboard() {
     let retryTimer = 0;
 
     const connect = () => {
-      const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-      socket = new WebSocket(`${protocol}//${window.location.host}/ws`);
+      // const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+      // socket = new WebSocket(`${protocol}//${window.location.host}/ws`);
+
+      // socket.onopen = () => {
+      // Nos saltamos el proxy de Vite y vamos directo al backend
+      socket = new WebSocket("ws://127.0.0.1:8000/ws");
 
       socket.onopen = () => {
         retryMs = 500;
